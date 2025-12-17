@@ -10,8 +10,28 @@ It is expected to have installed:
 - OpenJDK 23 or newer
 - Maven 3.9 or newer (3.8 may also work)
 
+## Installation
+Building and installing the dependencies:
+1. Clone the repository:
+   - ```git clone https://github.com/dariagj/GeminiProtocol.git```
+2. Make sure to navigate to the project directory
+   - ```cd GeminiProtocol```
+3. Install the dependencies, using Maven:
+  - ```mvn install```
 
-## Gemini Client Program
+## Usage
+1. Run Maven
+   - ```mvn clean package``` 
+2. Run Server
+   - ```java -cp target/gemini-2025.jar gemini.Server <directory> [port]```
+3. Run Proxy
+   - ```java -cp target/gemini-2025.jar gemini.Proxy <port>```
+4. Run Client
+   - ```java -cp target/gemini-2025.jar gemini.Client <URL> [input]```
+
+## More about the Client, Server, and Proxy
+
+### Gemini Client Program
 Command-line usage: `java -cp target/gemini-2025.jar gemini.Client <URL> [input]`.
 
 Argument/s:
@@ -39,7 +59,7 @@ Exit codes:
 Example: `java -cp target/gemini-2025.jar gemini.Client gemini://localhost/README.gmi`
 
 
-## Gemini Server Program
+### Gemini Server Program
 
 Command-line usage: `java -cp target/gemini-2025.jar gemini.Server <directory> [port]`
 
@@ -60,7 +80,7 @@ Status Codes:
 Example: `java -cp target/gemini-2025.jar gemini.Server src/main/java/ServerDir 1058`
 
 
-## Gemini Proxy Program
+### Gemini Proxy Program
 
 Command-line usage: `java -cp target/gemini-2025.jar gemini.Proxy <port>`.
 
