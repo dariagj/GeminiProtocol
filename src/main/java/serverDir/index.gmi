@@ -1,0 +1,11 @@
+# Student Details
+Name: Daria Gjonbalaj
+ID: i6395351
+
+# Document Tree
+## Files
+index.gmi
+README.gmi
+
+## Directories
+great-novels-ratings => jane-eyre.txt; pride-and-prejudice.txt; the-great-gatsby.txt;
