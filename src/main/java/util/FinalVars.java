@@ -1,7 +1,7 @@
 package util;
 
 public class FinalVars {
-	public static final int DEFAULT_PORT = 1958;
+	public static final int DEFAULT_PORT = 1965;
 	public static final int DEFAULT_PROXY_PORT = 9999;
 	public static final String PROXY_VARIABLE = "GEMINI_PROXY";
 	public static final String SCHEME = "gemini";

@@ -24,10 +24,44 @@ Building and installing the dependencies:
    - ```mvn clean package``` 
 2. Run Server
    - ```java -cp target/gemini-2025.jar gemini.Server <directory> [port]```
-3. Run Proxy
+3. Run Proxy (optional)
    - ```java -cp target/gemini-2025.jar gemini.Proxy <port>```
 4. Run Client
    - ```java -cp target/gemini-2025.jar gemini.Client <URL> [input]```
+
+## Project Structure
+```
+GeminiProtocol
+├── src/
+│   └── main/
+│   │   └── java/
+│   │       └── gemini/
+│   │       │   └── Client.java                    # client interface
+│   │       │   └── ClientEngine.java              # client operator
+│   │       │   └── Proxy.java                     # proxy interface
+│   │       │   └── Server.java                    # server interface
+│   │       │   └── ServerOrProxyEngine.java       # server and proxy operator
+│   │       └── process/
+│   │       │   └── ProxyRequestHandler.java       # handles the request as a proxy
+│   │       │   └── Reply.java                     # reply class
+│   │       │   └── ReplyHeaderValidator.java      # checks if the reply header follows the Gemini protocol's rules
+│   │       │   └── ReplyManager.java              # reply operator that acts based on the reply status code
+│   │       │   └── Request.java                   # request class
+│   │       │   └── RequestHandler.java            # interface that handles the request
+│   │       │   └── ServerRequestHandler.java      # handles the request as a server
+│   │       └── util/
+│   │           └── ByteValidator.java             # checks if any illegal/invalid bytes are present in the reply header or in request
+│   │           └── CRLFLine.java                  # checks if the reply header and the request end in ```\r\n```
+│   │           └── FinalVars.java                 # base variables 
+│   │           └── UriParser.java                 # parses the URI/URL from the request
+│   │           └── UriValidatr.java               # checks if the request follows the Gemini protocol's rules
+│   └── test/
+│       └── java/
+│           └── CRLFTests.java                     # tests the ```/r/n``` check
+│           └── MetaTests.java                     # tests the meta part of the reply
+└── target/                                        # gets created after running ```mvn clean package```
+```
+
 
 ## More about the Client, Server, and Proxy
 
@@ -38,7 +72,7 @@ Argument/s:
 - `URL` is required because of how the client behaves, it needs to connect to a URL/URI with a scheme, host, and path.
 - `input` is optional. It is used when the server returns a 1x status code (asking for input), so the client immediately passes it through without needing to ask the user again for it.
 
-Valid formats: Anything that applies to the project specification (Gemini protocol).
+Valid formats: Anything that applies to the Gemini protocol.
 
 Environment variable:
 - `GEMINI_PROXY = host:port` → for using a proxy
