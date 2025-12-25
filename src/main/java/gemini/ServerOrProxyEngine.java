@@ -3,13 +3,15 @@ package gemini;
 import process.*;
 import util.*;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.net.ServerSocket;
-import java.net.Socket;
+import java.io.*;
 import java.net.URI;
+import java.net.Socket;
+import javax.net.ssl.*;
+import java.security.KeyStore;
+import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
+import java.security.*;
+import java.security.cert.CertificateException;
 
 public class ServerOrProxyEngine {
 	int port;
@@ -26,18 +28,51 @@ public class ServerOrProxyEngine {
 	}
 
 	public void run() {
-		try (final var server = new ServerSocket(port)) {
-            System.err.println("Listening on port " + port);
-			while (true) {
-				final var socket = server.accept();
-				handleConnection(socket);
+		String rawPassword = System.getenv(FinalVars.GEMINI_TLS_PASS);
+		if (rawPassword == null || rawPassword.isEmpty()) {
+			System.err.println("Error: GEMINI_PASS environment variable is not set.");
+			System.exit(1);
+		}
+
+		char[] password = rawPassword.toCharArray();
+
+		SSLContext sslContext;
+		try {
+			KeyStore keyStore = KeyStore.getInstance("JKS");
+
+			try (FileInputStream fis = new FileInputStream(FinalVars.GEMINI_TLS_FILE)) {
+				keyStore.load(fis, password);
+			} catch (IOException | CertificateException | NoSuchAlgorithmException e) {
+				throw new RuntimeException(e);
+			}
+
+			KeyManagerFactory kmf = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+			kmf.init(keyStore, password);
+
+			sslContext = SSLContext.getInstance("TLS");
+			sslContext.init(kmf.getKeyManagers(), null, null);
+		} catch (KeyStoreException | NoSuchAlgorithmException | UnrecoverableKeyException | KeyManagementException e) {
+			throw new RuntimeException(e);
+		}
+
+		try {
+			SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
+
+			try (SSLServerSocket server = (SSLServerSocket) ssf.createServerSocket(port)) {
+				System.err.println("Gemini Server listening on TLS port " + port);
+				server.setWantClientAuth(true);
+
+				while (true) {
+					final SSLSocket socket = (SSLSocket) server.accept();
+					handleConnection(socket);
+				}
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 	}
 
-	public void handleConnection(Socket socket) {
+	public void handleConnection(SSLSocket socket) {
 		try (socket) {
 			OutputStream o = socket.getOutputStream();
 			InputStream i = socket.getInputStream();

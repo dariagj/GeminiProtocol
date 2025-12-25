@@ -6,10 +6,13 @@ import util.CRLFLine;
 import util.FinalVars;
 import util.UriValidator;
 
+import javax.net.ssl.*;
 import java.io.*;
-import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
+import java.security.cert.X509Certificate;
 
 // Engine class: handles URL loop (+ redirect # detection) and exits, additionally delegates reply/request
 public class ClientEngine {
@@ -19,6 +22,22 @@ public class ClientEngine {
 		int redirections = 0;
 		String host = uri.getHost();
 		int uriPort = uri.getPort() == -1 ? FinalVars.DEFAULT_PORT : uri.getPort();
+
+		SSLContext sc;
+		TrustManager[] trustAllCerts;
+		try {
+			trustAllCerts = new TrustManager[] {
+				new X509TrustManager() {
+					public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+					public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+					public X509Certificate[] getAcceptedIssuers() { return null; }
+				}
+			};
+			sc = SSLContext.getInstance("TLS");
+			sc.init(null, trustAllCerts, new java.security.SecureRandom());
+		} catch (NoSuchAlgorithmException | KeyManagementException e) {
+			throw new RuntimeException(e);
+		}
 
 		while (true) {
 			if (redirections >= FinalVars.MAX_REDIRECT_ITERATIONS) {
@@ -48,7 +67,10 @@ public class ClientEngine {
 				}
 			}
 
-			try (Socket socket = new Socket(host, uriPort)) {
+			SSLSocketFactory ssf = sc.getSocketFactory();
+			try (SSLSocket socket = (SSLSocket) ssf.createSocket(host, uriPort)) {
+				socket.startHandshake();
+
 				InputStream socketInput = socket.getInputStream();
 				OutputStream socketOutput = socket.getOutputStream();
 
@@ -57,6 +79,7 @@ public class ClientEngine {
 				socketOutput.flush();
 
 				byte[] replyLineBytes = CRLFLine.readCrlfLine(socketInput, FinalVars.MAX_REPLY_HEADER_SIZE);
+				// Checking in header ends in \r\n and if it surpasses the max length
 				if (replyLineBytes == null) {
 					System.err.println("Invalid Header. Issues may be: surpassing the allowed length or the terminator is not in CRLF format.");
 					System.exit(1);
@@ -70,14 +93,16 @@ public class ClientEngine {
 
 				String header = new String(replyLineBytes, StandardCharsets.UTF_8);
 				Integer statCodeInt = ReplyHeaderValidator.verifyStatCode(header);
+				// Checking if teh status code in the header is withing the appropriate range
 				if (statCodeInt == null) {
-					System.err.println("Invalid Status Code. Issues may be: not being a two digit number, not being in the valid (10-59) range, or no space after the first two characters of the header.");
+					System.err.println("Invalid Status Code. Issues may be: not being a two digit number, not being in the valid (10-69) range, or no space after the first two characters of the header.");
 					System.exit(1);
 				}
 				String statCode = String.valueOf(statCodeInt);
 
 				String meta = ReplyHeaderValidator.verifyMetaPresence(header);
 				boolean error = ReplyHeaderValidator.isErrorOrRedirect(statCode);
+				// Checking if meta is present for 1x, 2x, 44, 6x status codes
 				if (meta == null && !error) {
 					System.err.println("Invalid Meta. Prompt/Meta/Time is missing");
 					System.exit(1);
@@ -94,10 +119,6 @@ public class ClientEngine {
 					System.exit(0);
 				} else if (statCode.startsWith("3")) {
 					redirections += 1;
-					if (redirections > FinalVars.MAX_REDIRECT_ITERATIONS) {
-						System.err.println("5 redirections already attempted.");
-						System.exit(1);
-					}
 					uri = replyManager.getRedirect(meta, uri);
 					if (uri.toString().equals("empty")) {
 						System.err.println("Redirection with no path");
@@ -109,6 +130,8 @@ public class ClientEngine {
 					System.err.println(header);
 					replyManager.getErrorCodes(statCode);
 					System.exit(Integer.parseInt(statCode));
+				} else if (statCode.startsWith("6")) {
+					sc = replyManager.getCertificateAsk(meta, trustAllCerts);
 				} else
 					System.exit(1);
 			} catch (Throwable e) {

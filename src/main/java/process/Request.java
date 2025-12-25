@@ -21,8 +21,8 @@ public class Request {
 	}
 
 	public URI getURI() throws URISyntaxException {
-//		if (uri.getFragment() != null)
-//			return new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), uri.getPath(), null, null);
+		if (uri.getFragment() != null)
+			return new URI(uri.getScheme(), uri.getUserInfo(), uri.getHost(), uri.getPort(), uri.getPath(), uri.getQuery(), null);
 		return uri;
 	}
 }

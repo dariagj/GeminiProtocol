@@ -4,11 +4,13 @@ import util.ByteValidator;
 import util.CRLFLine;
 import util.FinalVars;
 
+import javax.net.ssl.*;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.security.cert.X509Certificate;
 
 public class ProxyRequestHandler implements RequestHandler {
 	private final ReplyManager replyManager = new ReplyManager();
@@ -40,7 +42,20 @@ public class ProxyRequestHandler implements RequestHandler {
 					}
 				}
 
-				try (Socket socket = new Socket(host, uriPort)) {
+				TrustManager[] trustAllCerts = new TrustManager[] {
+					new X509TrustManager() {
+						public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+						public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+						public X509Certificate[] getAcceptedIssuers() { return null; }
+					}
+				};
+				SSLContext sc = SSLContext.getInstance("TLS");
+				sc.init(null, trustAllCerts, new java.security.SecureRandom());
+
+				SSLSocketFactory ssf = sc.getSocketFactory();
+				try (SSLSocket socket = (SSLSocket) ssf.createSocket(host, uriPort)) {
+					socket.startHandshake();
+
 					InputStream socketInput = socket.getInputStream();
 					OutputStream socketOutput = socket.getOutputStream();
 
@@ -58,7 +73,7 @@ public class ProxyRequestHandler implements RequestHandler {
 					String header = new String(replyLineBytes, StandardCharsets.UTF_8);
 					Integer statCodeInt = ReplyHeaderValidator.verifyStatCode(header);
 					if (statCodeInt == null)
-						return new Reply(43, "Proxy Error: Invalid status code, either not in range 10-59 or no space between it and meta");
+						return new Reply(43, "Proxy Error: Invalid status code, either not in range 10-69 or no space between it and meta");
 					String statCode = String.valueOf(statCodeInt);
 
 					String meta = ReplyHeaderValidator.verifyMetaPresence(header);
@@ -84,6 +99,8 @@ public class ProxyRequestHandler implements RequestHandler {
 					} else if (statCode.equals("44")) {
 						replyManager.waitAndSleep(meta);
 					} else if (statCode.startsWith("4") || statCode.startsWith("5")) {    // handles 43 as well
+						return new Reply(statCodeInt, meta);
+					} else if (statCode.startsWith("6")) {
 						return new Reply(statCodeInt, meta);
 					} else {
 						return new Reply(43, "Proxy Error: Unexpected status code " + statCode);

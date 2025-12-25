@@ -20,13 +20,41 @@ Building and installing the dependencies:
   - ```mvn install```
 
 ## Usage
-1. Run Maven
+1. Run ```keytool -genkeypair -alias gemini-key -keyalg RSA -keystore <your-chosen-file-name>.jks -storepass <you-chosen-password> -validity 3650```
+2. Modify the `GEMINI_TLS_FILE` Variable in `FinalVars.java` to <your-chosen-file-name>.jks
+3. Set Environmental Variable for Password and Proxy
+   - Windows
+      ```bash
+        $env:GEMINI_PASS="<your-chosen-password>" 
+      ```
+   - Linux
+     ```bash
+       export GEMINI_PASS="<your-chosen-password>"
+     ```
+   - macOS
+     ```zsh
+       export GEMINI_PASS="<your-chosen-password>"
+     ```
+4. Run Maven
    - ```mvn clean package``` 
-2. Run Server
+5. Run Server
    - ```java -cp target/gemini-2025.jar gemini.Server <directory> [port]```
-3. Run Proxy (optional)
+6. Run Proxy (optional)
+   - Set Environmental Variable 
+     - Windows
+       ```bash
+         $env:GEMINI_PROXY="<host>:<port>"
+       ```
+     - Linux
+       ```bash
+         export GEMINI_PROXY="<host>:<port>"
+       ```
+     - macOS
+       ```zsh
+         export GEMINI_PROXY="<host>:<port>"
+       ```
    - ```java -cp target/gemini-2025.jar gemini.Proxy <port>```
-4. Run Client
+7. Run Client
    - ```java -cp target/gemini-2025.jar gemini.Client <URL> [input]```
 
 ## Project Structure

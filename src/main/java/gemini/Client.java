@@ -3,6 +3,8 @@ package gemini;
 import util.UriValidator;
 
 import java.net.URI;
+import java.security.KeyManagementException;
+import java.security.NoSuchAlgorithmException;
 
 // Entry point class
 public class Client {
