@@ -1,5 +1,6 @@
 # Gemini Protocol
 Created a client, server, and proxy based on the Gemini Protocol.
+- Started as a project for the course "Computer Networks" at Maastricht University during November 2025, but continued to be developed as a personal project.
 
 ## Author
 Daria Gjonbalaj
