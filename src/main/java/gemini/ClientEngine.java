@@ -1,10 +1,7 @@
 package gemini;
 
 import process.*;
-import util.ByteValidator;
-import util.CRLFLine;
-import util.FinalVars;
-import util.UriValidator;
+import util.*;
 
 import javax.net.ssl.*;
 import java.io.*;
@@ -12,6 +9,7 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 
 // Engine class: handles URL loop (+ redirect # detection) and exits, additionally delegates reply/request
@@ -34,7 +32,7 @@ public class ClientEngine {
 				}
 			};
 			sc = SSLContext.getInstance("TLS");
-			sc.init(null, trustAllCerts, new java.security.SecureRandom());
+			sc.init(null, trustAllCerts, new SecureRandom());
 		} catch (NoSuchAlgorithmException | KeyManagementException e) {
 			throw new RuntimeException(e);
 		}
@@ -70,6 +68,9 @@ public class ClientEngine {
 			SSLSocketFactory ssf = sc.getSocketFactory();
 			try (SSLSocket socket = (SSLSocket) ssf.createSocket(host, uriPort)) {
 				socket.startHandshake();
+
+				X509Certificate cert = (X509Certificate) socket.getSession().getPeerCertificates()[0];
+				TofuManager.checkOrSaveTofu(uri.getHost(), TofuManager.getFingerprint(cert));
 
 				InputStream socketInput = socket.getInputStream();
 				OutputStream socketOutput = socket.getOutputStream();
@@ -111,8 +112,8 @@ public class ClientEngine {
 				// Taking action based on stat code
 				if (statCode.startsWith("1")) {
 					System.err.println(meta);
-					input = replyManager.askInput(input);
-					uri = new URI(uri.getScheme(), uri.getHost() + uri.getPort(), uri.getPath(), input, null);
+					input = replyManager.askInput(input, statCodeInt);
+					uri = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), uri.getPath(), input, null);
 				} else if (statCode.startsWith("2") && meta != null && !meta.isBlank()) {
 					byte[] body = replyManager.processSuccess(socketInput);
 					System.out.write(body);

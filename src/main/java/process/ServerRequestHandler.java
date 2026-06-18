@@ -20,8 +20,6 @@ public class ServerRequestHandler implements RequestHandler {
 		String path = URLDecoder.decode(request.getPath(), StandardCharsets.UTF_8);
 		if (path == null || path.isEmpty())
 			path = "/";
-		// doesn't work on Linux
-		path = path.toLowerCase();
 		return dealWithPath(rootDirectory, path);
 	}
 
