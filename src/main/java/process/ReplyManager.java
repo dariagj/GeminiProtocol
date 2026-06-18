@@ -16,6 +16,7 @@ import java.security.cert.CertificateException;
 
 public class ReplyManager {
 	// starts with 1 => input expected
+	// add 11 code
 	public String askInput(String input) {
 		if (input == null) {
 			var console = System.console();
