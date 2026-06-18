@@ -29,7 +29,7 @@ public class ByteValidator {
 			if (b <= 0x7F) {	// Single byte ASCII
 				if (b == 0x0D || b == 0x0A)
 					continue;
-				if ((b <= 0x1F && b != 0x20) || b == 0x7F)  // Reject C0 controls and DEL
+				if (b <= 0x1F|| b == 0x7F)  // Reject C0 controls and DEL
 					return false;
 			} else
 				if (isStartSequence(b))

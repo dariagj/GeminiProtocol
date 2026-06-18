@@ -41,7 +41,7 @@ public class ReplyManager {
 
 	// starts with 3 => redirection
 	public URI getRedirect(String meta, URI uri) throws URISyntaxException {
-		if (meta.startsWith(FinalVars.SCHEME))
+		if (meta.startsWith(FinalVars.SCHEME + "://"))
 			return new URI(meta);
 		else if (meta.isEmpty())
 			return new URI("empty");

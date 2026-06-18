@@ -109,12 +109,6 @@ public class ServerOrProxyEngine {
 					return;	// checking uri validity
 				}
 
-				if (!uriValidator.verifyFragment(new UriParser(uri))) {
-					reply = new Reply(59, "Fragment in URI");
-					reply.deliverReply(o);
-					return;	// checking fragment presence
-				}
-
 				Request req = new Request(uri);
 				reply = requestHandler.handleRequest(req);
 			} catch (Throwable e) {

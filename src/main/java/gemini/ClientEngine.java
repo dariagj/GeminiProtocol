@@ -19,8 +19,6 @@ public class ClientEngine {
 
 	public void handleConnection(URI uri, String input) {
 		int redirections = 0;
-		String host = uri.getHost();
-		int uriPort = uri.getPort() == -1 ? FinalVars.DEFAULT_PORT : uri.getPort();
 
 		SSLContext sc;
 		TrustManager[] trustAllCerts;
@@ -49,6 +47,9 @@ public class ClientEngine {
 				System.err.println("Invalid URI");
 				System.exit(1);
 			}
+
+			String host = uri.getHost();
+			int uriPort = uri.getPort() == -1 ? FinalVars.DEFAULT_PORT : uri.getPort();
 
 			String proxyConnection = System.getenv(FinalVars.PROXY_VARIABLE);
 			if (proxyConnection != null && !proxyConnection.isEmpty()) {
