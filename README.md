@@ -81,12 +81,16 @@ GeminiProtocol
 │   │           └── ByteValidator.java             # checks if any illegal/invalid bytes are present in the reply header or in request
 │   │           └── CRLFLine.java                  # checks if the reply header and the request end in ```\r\n```
 │   │           └── FinalVars.java                 # base variables 
+│   │           └── TofuManager.java               # manages the certificate pinning
 │   │           └── UriParser.java                 # parses the URI/URL from the request
-│   │           └── UriValidatr.java               # checks if the request follows the Gemini protocol's rules
+│   │           └── UriValidator.java               # checks if the request follows the Gemini protocol's rules
 │   └── test/
 │       └── java/
-│           └── CRLFTests.java                     # tests the ```/r/n``` check
+│           └── CRLFTests.java                     # tests the ```\r\n``` check
+│           └── IllegalsTests.java                 # tests the illegal/invalid bytes check
 │           └── MetaTests.java                     # tests the meta part of the reply
+│           └── RequestTests.java                  # tests the request class
+│           └── ServerTests.java                   # tests ServerRequestHandler
 └── target/                                        # gets created after running ```mvn clean package```
 ```
 
@@ -128,7 +132,7 @@ Command-line usage: `java -cp target/gemini-2025.jar gemini.Server <directory> [
 Argument/s:
 - `directory` is required because the server needs to know the file system where to look up the files asked by the client.
   - there either needs to be an already made directory or make a new one for the purpose of testing
-- `port` is optional. When provided, it is used instead of the default port (1958).
+- `port` is optional. When provided, it is used instead of the default port (1965).
 
 Valid formats: Anything that applies to the project specification (Gemini protocol).
 
@@ -138,6 +142,7 @@ Status Codes:
 - 3x → redirection (absolute/relative)
 - 44 → sleep
 - 4x/5x → error
+- 6x → client certificate needed
 
 Example: `java -cp target/gemini-2025.jar gemini.Server src/main/java/ServerDir 1058`
 
@@ -147,7 +152,7 @@ Example: `java -cp target/gemini-2025.jar gemini.Server src/main/java/ServerDir 
 Command-line usage: `java -cp target/gemini-2025.jar gemini.Proxy <port>`.
 
 Argument/s:
-- `port` is required because the proxy needs to know which port to connect to
+- `port` is optional, defaults to 9999
 
 Valid formats: Anything that applies to the project specification (Gemini protocol).
 
