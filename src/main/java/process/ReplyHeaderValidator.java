@@ -31,11 +31,9 @@ public class ReplyHeaderValidator {
 	}
 
 	public static boolean verifyMimeType(String meta) {
-		meta = meta.toLowerCase();
+		meta = meta.split(";")[0].trim().toLowerCase();
 		return meta.equalsIgnoreCase("text/gemini")
-			|| meta.equalsIgnoreCase("text/gemini; charset=utf-8")
 			|| meta.equalsIgnoreCase("text/plain")
-			|| meta.equalsIgnoreCase("text/plain; lang=en")
 			|| meta.equalsIgnoreCase("application/octet-stream");
 	}
 }

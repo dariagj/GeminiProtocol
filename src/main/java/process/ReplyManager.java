@@ -13,15 +13,18 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.Arrays;
 
 public class ReplyManager {
 	// starts with 1 => input expected
-	// add 11 code
-	public String askInput(String input) {
+	public String askInput(String input, int statCode) {
 		if (input == null) {
 			var console = System.console();
 			if (console != null) {
-				input = console.readLine();
+				if (statCode == 11)
+					input = new String(console.readPassword());
+				else
+					input = console.readLine();
 			}
 		}
 		return input;
