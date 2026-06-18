@@ -1,7 +1,7 @@
 package process;
 
 public class ReplyHeaderValidator {
-	// Checking if it is a 2 digit string and in the valid range (10-59)
+	// Checking if it is a 2 digit string and in the valid range (10-69)
 	public static Integer verifyStatCode(String header) {
 		String statCode = header.split(" ", 2)[0];
 		try {
@@ -19,7 +19,6 @@ public class ReplyHeaderValidator {
 		return statCode.matches("3[0-9]")
 			|| statCode.matches("4[0-25-9]")
 			|| statCode.matches("5[0-9]");
-
 	}
 
 	// Checking if meta is present

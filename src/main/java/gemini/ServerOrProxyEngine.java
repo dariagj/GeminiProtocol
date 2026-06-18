@@ -59,6 +59,8 @@ public class ServerOrProxyEngine {
 			SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
 
 			try (SSLServerSocket server = (SSLServerSocket) ssf.createServerSocket(port)) {
+				server.setEnabledProtocols(new String[]{"TLSv1.2", "TLSv1.3"});
+
 				System.err.println("Gemini Server listening on TLS port " + port);
 				server.setWantClientAuth(true);
 
