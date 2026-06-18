@@ -5,13 +5,14 @@ import util.*;
 
 import java.io.*;
 import java.net.URI;
-import java.net.Socket;
 import javax.net.ssl.*;
 import java.security.KeyStore;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ServerOrProxyEngine {
 	int port;
@@ -64,9 +65,10 @@ public class ServerOrProxyEngine {
 				System.err.println("Gemini Server listening on TLS port " + port);
 				server.setWantClientAuth(true);
 
+				ExecutorService pool = Executors.newCachedThreadPool();
 				while (true) {
 					final SSLSocket socket = (SSLSocket) server.accept();
-					handleConnection(socket);
+					pool.submit(() -> handleConnection(socket));
 				}
 			}
 		} catch (Exception e) {

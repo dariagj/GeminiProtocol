@@ -13,7 +13,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.security.*;
 import java.security.cert.CertificateException;
-import java.util.Arrays;
 
 public class ReplyManager {
 	// starts with 1 => input expected
