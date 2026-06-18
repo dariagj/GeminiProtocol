@@ -11,6 +11,7 @@ import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 // Engine class: handles URL loop (+ redirect # detection) and exits, additionally delegates reply/request
 public class ClientEngine {
@@ -67,10 +68,14 @@ public class ClientEngine {
 
 			SSLSocketFactory ssf = sc.getSocketFactory();
 			try (SSLSocket socket = (SSLSocket) ssf.createSocket(host, uriPort)) {
+				socket.setEnabledProtocols(new String[]{"TLSv1.2", "TLSv1.3"});
+				SSLParameters params = socket.getSSLParameters();
+				params.setServerNames(List.of(new SNIHostName(host)));
+				socket.setSSLParameters(params);
 				socket.startHandshake();
 
 				X509Certificate cert = (X509Certificate) socket.getSession().getPeerCertificates()[0];
-				TofuManager.checkOrSaveTofu(uri.getHost(), TofuManager.getFingerprint(cert));
+				TofuManager.checkOrSaveTofu(uri.getHost() + ":" + uriPort, TofuManager.getFingerprint(cert));
 
 				InputStream socketInput = socket.getInputStream();
 				OutputStream socketOutput = socket.getOutputStream();

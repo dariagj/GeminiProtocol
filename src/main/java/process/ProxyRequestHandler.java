@@ -3,6 +3,7 @@ package process;
 import util.ByteValidator;
 import util.CRLFLine;
 import util.FinalVars;
+import util.TofuManager;
 
 import javax.net.ssl.*;
 import java.io.InputStream;
@@ -11,6 +12,7 @@ import java.net.Socket;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 public class ProxyRequestHandler implements RequestHandler {
 	private final ReplyManager replyManager = new ReplyManager();
@@ -22,7 +24,7 @@ public class ProxyRequestHandler implements RequestHandler {
 			int redirections = 0;
 
 			while (true) {
-				if (redirections > FinalVars.MAX_REDIRECT_ITERATIONS)
+				if (redirections >= FinalVars.MAX_REDIRECT_ITERATIONS)
 					return new Reply(43, "Proxy Error: Too many redirects.");
 
 				String host = uri.getHost();
@@ -54,12 +56,19 @@ public class ProxyRequestHandler implements RequestHandler {
 
 				SSLSocketFactory ssf = sc.getSocketFactory();
 				try (SSLSocket socket = (SSLSocket) ssf.createSocket(host, uriPort)) {
+					socket.setEnabledProtocols(new String[]{"TLSv1.2", "TLSv1.3"});
+					SSLParameters params = socket.getSSLParameters();
+					params.setServerNames(List.of(new SNIHostName(host)));
+					socket.setSSLParameters(params);
 					socket.startHandshake();
+
+					X509Certificate cert = (X509Certificate) socket.getSession().getPeerCertificates()[0];
+					TofuManager.checkOrSaveTofu(uri.getHost() + ":" + uriPort, TofuManager.getFingerprint(cert));
 
 					InputStream socketInput = socket.getInputStream();
 					OutputStream socketOutput = socket.getOutputStream();
 
-					socketOutput.write((uri + "\r\n").getBytes());
+					socketOutput.write((uri.toASCIIString() + "\r\n").getBytes());
 					socketOutput.flush();
 
 					byte[] replyLineBytes = CRLFLine.readCrlfLine(socketInput, FinalVars.MAX_REPLY_HEADER_SIZE);
