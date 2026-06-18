@@ -18,12 +18,7 @@ public class ServerOrProxyEngine {
 	int port;
 	RequestHandler requestHandler;
 
-	public ServerOrProxyEngine(int port, ProxyRequestHandler reqHand) {
-		this.port = port;
-		this.requestHandler = reqHand;
-	}
-
-	public ServerOrProxyEngine(int port, ServerRequestHandler reqHand) {
+	public ServerOrProxyEngine(int port, RequestHandler reqHand) {
 		this.port = port;
 		this.requestHandler = reqHand;
 	}
