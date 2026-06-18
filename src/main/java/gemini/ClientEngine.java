@@ -55,14 +55,14 @@ public class ClientEngine {
 			if (proxyConnection != null && !proxyConnection.isEmpty()) {
 				String[] proxyVarParts = proxyConnection.split(":", 2);
 				if (proxyVarParts.length != 2) {
-					System.err.println("Requirement: GEMINI_LITE_PROXY format => hostname:port");
+					System.err.println("Requirement: GEMINI_PROXY format => hostname:port");
 					System.exit(1);
 				}
 				host = proxyVarParts[0];
 				try {
 					uriPort = Integer.parseInt(proxyVarParts[1]);
 				} catch (NumberFormatException e) {
-					System.err.println("Invalid port in GEMINI_LITE_PROXY: " + proxyVarParts[1]);
+					System.err.println("Invalid port in GEMINI_PROXY: " + proxyVarParts[1]);
 					System.exit(1);
 				}
 			}
@@ -93,7 +93,7 @@ public class ClientEngine {
 
 				String header = new String(replyLineBytes, StandardCharsets.UTF_8);
 				Integer statCodeInt = ReplyHeaderValidator.verifyStatCode(header);
-				// Checking if teh status code in the header is withing the appropriate range
+				// Checking if the status code in the header is withing the appropriate range
 				if (statCodeInt == null) {
 					System.err.println("Invalid Status Code. Issues may be: not being a two digit number, not being in the valid (10-69) range, or no space after the first two characters of the header.");
 					System.exit(1);
@@ -108,10 +108,11 @@ public class ClientEngine {
 					System.exit(1);
 				}
 
+				// Taking action based on stat code
 				if (statCode.startsWith("1")) {
 					System.err.println(meta);
 					input = replyManager.askInput(input);
-					uri = new URI(uri.getScheme(), uri.getHost(), uri.getPath(), input, null);
+					uri = new URI(uri.getScheme(), uri.getHost() + uri.getPort(), uri.getPath(), input, null);
 				} else if (statCode.startsWith("2") && meta != null && !meta.isBlank()) {
 					byte[] body = replyManager.processSuccess(socketInput);
 					System.out.write(body);

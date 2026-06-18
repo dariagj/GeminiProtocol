@@ -6,7 +6,7 @@ public class ReplyHeaderValidator {
 		String statCode = header.split(" ", 2)[0];
 		try {
 			int statCodeInt = Integer.parseInt(statCode);
-			if (statCode.length() == 2 && (statCodeInt >= 10 && statCodeInt <= 59))
+			if (statCode.length() == 2 && (statCodeInt >= 10 && statCodeInt <= 69))
 				return statCodeInt;
 			return null;
 		} catch (NumberFormatException e) {
@@ -19,6 +19,7 @@ public class ReplyHeaderValidator {
 		return statCode.matches("3[0-9]")
 			|| statCode.matches("4[0-25-9]")
 			|| statCode.matches("5[0-9]");
+
 	}
 
 	// Checking if meta is present
@@ -32,7 +33,9 @@ public class ReplyHeaderValidator {
 	public static boolean verifyMimeType(String meta) {
 		meta = meta.toLowerCase();
 		return meta.equalsIgnoreCase("text/gemini")
+			|| meta.equalsIgnoreCase("text/gemini; charset=utf-8")
 			|| meta.equalsIgnoreCase("text/plain")
+			|| meta.equalsIgnoreCase("text/plain; lang=en")
 			|| meta.equalsIgnoreCase("application/octet-stream");
 	}
 }
