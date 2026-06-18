@@ -121,4 +121,73 @@ public class MetaTests {
 		Integer statCode = ReplyHeaderValidator.verifyStatCode(replyHeader("59 Bad Request\r\n"));
 		assertTrue(ReplyHeaderValidator.isErrorOrRedirect(statCode.toString()));
 	}
+
+	// --- verifyStatCode range ---
+
+	@Test
+	void statCode10Valid() throws IOException {
+		assertEquals(10, ReplyHeaderValidator.verifyStatCode(replyHeader("10 Enter name\r\n")));
+	}
+
+	@Test
+	void statCode69Valid() throws IOException {
+		assertEquals(69, ReplyHeaderValidator.verifyStatCode(replyHeader("69 cert info\r\n")));
+	}
+
+	@Test
+	void statCode60Valid() throws IOException {
+		assertEquals(60, ReplyHeaderValidator.verifyStatCode(replyHeader("60 cert needed\r\n")));
+	}
+
+	@Test
+	void statCode09Invalid() throws IOException {
+		assertNull(ReplyHeaderValidator.verifyStatCode(replyHeader("09 bad\r\n")));
+	}
+
+	@Test
+	void statCode70Invalid() throws IOException {
+		assertNull(ReplyHeaderValidator.verifyStatCode(replyHeader("70 bad\r\n")));
+	}
+
+	@Test
+	void statCodeNotANumberInvalid() throws IOException {
+		assertNull(ReplyHeaderValidator.verifyStatCode("xx bad"));
+	}
+
+	// --- verifyMimeType ---
+
+	@Test
+	void mimeTextGemini() {
+		assertTrue(ReplyHeaderValidator.verifyMimeType("text/gemini"));
+	}
+
+	@Test
+	void mimeTextGeminiWithCharset() {
+		assertTrue(ReplyHeaderValidator.verifyMimeType("text/gemini; charset=utf-8"));
+	}
+
+	@Test
+	void mimeTextPlain() {
+		assertTrue(ReplyHeaderValidator.verifyMimeType("text/plain"));
+	}
+
+	@Test
+	void mimeTextPlainWithParam() {
+		assertTrue(ReplyHeaderValidator.verifyMimeType("text/plain; lang=en"));
+	}
+
+	@Test
+	void mimeOctetStream() {
+		assertTrue(ReplyHeaderValidator.verifyMimeType("application/octet-stream"));
+	}
+
+	@Test
+	void mimeUnknownTypeRejected() {
+		assertFalse(ReplyHeaderValidator.verifyMimeType("text/html"));
+	}
+
+	@Test
+	void mimeCaseInsensitive() {
+		assertTrue(ReplyHeaderValidator.verifyMimeType("Text/Gemini"));
+	}
 }

@@ -5,24 +5,20 @@ import util.*;
 
 import java.io.*;
 import java.net.URI;
-import java.net.Socket;
 import javax.net.ssl.*;
 import java.security.KeyStore;
 import java.io.FileInputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 public class ServerOrProxyEngine {
 	int port;
 	RequestHandler requestHandler;
 
-	public ServerOrProxyEngine(int port, ProxyRequestHandler reqHand) {
-		this.port = port;
-		this.requestHandler = reqHand;
-	}
-
-	public ServerOrProxyEngine(int port, ServerRequestHandler reqHand) {
+	public ServerOrProxyEngine(int port, RequestHandler reqHand) {
 		this.port = port;
 		this.requestHandler = reqHand;
 	}
@@ -59,12 +55,15 @@ public class ServerOrProxyEngine {
 			SSLServerSocketFactory ssf = sslContext.getServerSocketFactory();
 
 			try (SSLServerSocket server = (SSLServerSocket) ssf.createServerSocket(port)) {
+				server.setEnabledProtocols(new String[]{"TLSv1.2", "TLSv1.3"});
+
 				System.err.println("Gemini Server listening on TLS port " + port);
 				server.setWantClientAuth(true);
 
+				ExecutorService pool = Executors.newCachedThreadPool();
 				while (true) {
 					final SSLSocket socket = (SSLSocket) server.accept();
-					handleConnection(socket);
+					pool.submit(() -> handleConnection(socket));
 				}
 			}
 		} catch (Exception e) {
@@ -108,12 +107,6 @@ public class ServerOrProxyEngine {
 					reply = new Reply(59, "Bad Request");
 					reply.deliverReply(o);
 					return;	// checking uri validity
-				}
-
-				if (!uriValidator.verifyFragment(new UriParser(uri))) {
-					reply = new Reply(59, "Fragment in URI");
-					reply.deliverReply(o);
-					return;	// checking fragment presence
 				}
 
 				Request req = new Request(uri);

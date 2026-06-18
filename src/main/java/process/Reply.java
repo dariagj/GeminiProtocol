@@ -28,21 +28,16 @@ public class Reply {
 
 	private byte[] buildReplyWithBody() {
 		if (body != null) {
-			int headerLength = buildReplyHeader().length;
-			int bodyLength = body.length;
-			byte[] resultReply = new byte[headerLength + bodyLength];
+			byte[] header = buildReplyHeader();
+			byte[] result = new byte[header.length + body.length];
 
-			System.arraycopy(buildReplyHeader(), 0, resultReply, 0, headerLength);
-			System.arraycopy(body, 0, resultReply, headerLength, bodyLength);
+			System.arraycopy(header, 0, result, 0, header.length);
+			System.arraycopy(body, 0, result, header.length, body.length);
 
-			return resultReply;
+			return result;
 		}
 		return buildReplyHeader();
 	}
-
-//	public byte[] getBody() {
-//		return body;
-//	}
 
 	public void deliverReply(OutputStream output) {
 		try {

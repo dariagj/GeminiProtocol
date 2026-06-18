@@ -16,12 +16,10 @@ public class ServerRequestHandler implements RequestHandler {
 	public Reply handleRequest(Request request) {
 		// from https://docs.oracle.com/en/java/javase/17/docs/api/java.base/java/net/URLDecoder.html
 		// had to make sure path is in UTF_8 form so later I can check for "invalid" requests
+		// Space (%20) is already dealt with
 		String path = URLDecoder.decode(request.getPath(), StandardCharsets.UTF_8);
 		if (path == null || path.isEmpty())
 			path = "/";
-		path = path.toLowerCase();
-		if (path.contains("%20"))
-			path = path.replace("%20", " ");
 		return dealWithPath(rootDirectory, path);
 	}
 
@@ -36,7 +34,6 @@ public class ServerRequestHandler implements RequestHandler {
 			if (!canonicalFile.getPath().toLowerCase().startsWith(dir))
 				return new Reply(51, "Not Found");
 
-			// TODO: mention in report
 			if (file.isDirectory()) {
 				File geminiIndex = new File(file, "index.gmi");
 				File plainIndex = new File(file, "index.txt");

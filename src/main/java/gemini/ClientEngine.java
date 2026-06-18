@@ -1,10 +1,7 @@
 package gemini;
 
 import process.*;
-import util.ByteValidator;
-import util.CRLFLine;
-import util.FinalVars;
-import util.UriValidator;
+import util.*;
 
 import javax.net.ssl.*;
 import java.io.*;
@@ -12,7 +9,9 @@ import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
+import java.util.List;
 
 // Engine class: handles URL loop (+ redirect # detection) and exits, additionally delegates reply/request
 public class ClientEngine {
@@ -20,8 +19,6 @@ public class ClientEngine {
 
 	public void handleConnection(URI uri, String input) {
 		int redirections = 0;
-		String host = uri.getHost();
-		int uriPort = uri.getPort() == -1 ? FinalVars.DEFAULT_PORT : uri.getPort();
 
 		SSLContext sc;
 		TrustManager[] trustAllCerts;
@@ -34,7 +31,7 @@ public class ClientEngine {
 				}
 			};
 			sc = SSLContext.getInstance("TLS");
-			sc.init(null, trustAllCerts, new java.security.SecureRandom());
+			sc.init(null, trustAllCerts, new SecureRandom());
 		} catch (NoSuchAlgorithmException | KeyManagementException e) {
 			throw new RuntimeException(e);
 		}
@@ -51,25 +48,35 @@ public class ClientEngine {
 				System.exit(1);
 			}
 
+			String host = uri.getHost();
+			int uriPort = uri.getPort() == -1 ? FinalVars.DEFAULT_PORT : uri.getPort();
+
 			String proxyConnection = System.getenv(FinalVars.PROXY_VARIABLE);
 			if (proxyConnection != null && !proxyConnection.isEmpty()) {
 				String[] proxyVarParts = proxyConnection.split(":", 2);
 				if (proxyVarParts.length != 2) {
-					System.err.println("Requirement: GEMINI_LITE_PROXY format => hostname:port");
+					System.err.println("Requirement: GEMINI_PROXY format => hostname:port");
 					System.exit(1);
 				}
 				host = proxyVarParts[0];
 				try {
 					uriPort = Integer.parseInt(proxyVarParts[1]);
 				} catch (NumberFormatException e) {
-					System.err.println("Invalid port in GEMINI_LITE_PROXY: " + proxyVarParts[1]);
+					System.err.println("Invalid port in GEMINI_PROXY: " + proxyVarParts[1]);
 					System.exit(1);
 				}
 			}
 
 			SSLSocketFactory ssf = sc.getSocketFactory();
 			try (SSLSocket socket = (SSLSocket) ssf.createSocket(host, uriPort)) {
+				socket.setEnabledProtocols(new String[]{"TLSv1.2", "TLSv1.3"});
+				SSLParameters params = socket.getSSLParameters();
+				params.setServerNames(List.of(new SNIHostName(host)));
+				socket.setSSLParameters(params);
 				socket.startHandshake();
+
+				X509Certificate cert = (X509Certificate) socket.getSession().getPeerCertificates()[0];
+				TofuManager.checkOrSaveTofu(uri.getHost() + ":" + uriPort, TofuManager.getFingerprint(cert));
 
 				InputStream socketInput = socket.getInputStream();
 				OutputStream socketOutput = socket.getOutputStream();
@@ -93,7 +100,7 @@ public class ClientEngine {
 
 				String header = new String(replyLineBytes, StandardCharsets.UTF_8);
 				Integer statCodeInt = ReplyHeaderValidator.verifyStatCode(header);
-				// Checking if teh status code in the header is withing the appropriate range
+				// Checking if the status code in the header is withing the appropriate range
 				if (statCodeInt == null) {
 					System.err.println("Invalid Status Code. Issues may be: not being a two digit number, not being in the valid (10-69) range, or no space after the first two characters of the header.");
 					System.exit(1);
@@ -108,10 +115,11 @@ public class ClientEngine {
 					System.exit(1);
 				}
 
+				// Taking action based on stat code
 				if (statCode.startsWith("1")) {
 					System.err.println(meta);
-					input = replyManager.askInput(input);
-					uri = new URI(uri.getScheme(), uri.getHost(), uri.getPath(), input, null);
+					input = replyManager.askInput(input, statCodeInt);
+					uri = new URI(uri.getScheme(), null, uri.getHost(), uri.getPort(), uri.getPath(), input, null);
 				} else if (statCode.startsWith("2") && meta != null && !meta.isBlank()) {
 					byte[] body = replyManager.processSuccess(socketInput);
 					System.out.write(body);

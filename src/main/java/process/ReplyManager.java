@@ -16,11 +16,14 @@ import java.security.cert.CertificateException;
 
 public class ReplyManager {
 	// starts with 1 => input expected
-	public String askInput(String input) {
+	public String askInput(String input, int statCode) {
 		if (input == null) {
 			var console = System.console();
 			if (console != null) {
-				input = console.readLine();
+				if (statCode == 11)
+					input = new String(console.readPassword());
+				else
+					input = console.readLine();
 			}
 		}
 		return input;
@@ -38,7 +41,7 @@ public class ReplyManager {
 
 	// starts with 3 => redirection
 	public URI getRedirect(String meta, URI uri) throws URISyntaxException {
-		if (meta.startsWith(FinalVars.SCHEME))
+		if (meta.startsWith(FinalVars.SCHEME + "://"))
 			return new URI(meta);
 		else if (meta.isEmpty())
 			return new URI("empty");
