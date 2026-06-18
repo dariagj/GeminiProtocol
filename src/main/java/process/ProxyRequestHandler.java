@@ -22,6 +22,16 @@ public class ProxyRequestHandler implements RequestHandler {
 			URI uri = request.getURI();
 			int redirections = 0;
 
+			TrustManager[] trustAllCerts = new TrustManager[] {
+				new X509TrustManager() {
+					public void checkClientTrusted(X509Certificate[] chain, String authType) {}
+					public void checkServerTrusted(X509Certificate[] chain, String authType) {}
+					public X509Certificate[] getAcceptedIssuers() { return null; }
+				}
+			};
+			SSLContext sc = SSLContext.getInstance("TLS");
+			sc.init(null, trustAllCerts, new java.security.SecureRandom());
+
 			while (true) {
 				if (redirections >= FinalVars.MAX_REDIRECT_ITERATIONS)
 					return new Reply(43, "Proxy Error: Too many redirects.");
@@ -42,16 +52,6 @@ public class ProxyRequestHandler implements RequestHandler {
 						return new Reply(43, "Proxy Error: Invalid port in GEMINI_PROXY");
 					}
 				}
-
-				TrustManager[] trustAllCerts = new TrustManager[] {
-					new X509TrustManager() {
-						public void checkClientTrusted(X509Certificate[] chain, String authType) {}
-						public void checkServerTrusted(X509Certificate[] chain, String authType) {}
-						public X509Certificate[] getAcceptedIssuers() { return null; }
-					}
-				};
-				SSLContext sc = SSLContext.getInstance("TLS");
-				sc.init(null, trustAllCerts, new java.security.SecureRandom());
 
 				SSLSocketFactory ssf = sc.getSocketFactory();
 				try (SSLSocket socket = (SSLSocket) ssf.createSocket(host, uriPort)) {
