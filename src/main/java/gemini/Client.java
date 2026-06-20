@@ -4,7 +4,6 @@ import util.UriValidator;
 
 import java.net.URI;
 
-// Entry point class
 public class Client {
     ClientEngine clientEngine = new ClientEngine();
 

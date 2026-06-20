@@ -13,7 +13,6 @@ import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.List;
 
-// Engine class: handles URL loop (+ redirect # detection) and exits, additionally delegates reply/request
 public class ClientEngine {
 	private ReplyManager replyManager = new ReplyManager();
 
